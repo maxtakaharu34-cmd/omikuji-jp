@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+<meta name="theme-color" content="#1a0030" />
+<title>てんちょーおみくじ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+P+One&family=Kosugi+Maru&display=swap" rel="stylesheet" />
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+body {
+  font-family: "Kosugi Maru", "Mochiy Pop P One", system-ui, sans-serif;
+  color: #fff;
+  background:
+    radial-gradient(800px 500px at 30% 10%, rgba(232, 19, 58, 0.45), transparent 70%),
+    radial-gradient(800px 500px at 70% 90%, rgba(255, 215, 0, 0.25), transparent 70%),
+    linear-gradient(180deg, #2a0050, #08010f);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+body::before {
+  content: ""; position: fixed; inset: -10%;
+  background: repeating-linear-gradient(-20deg, rgba(255,225,0,0.04) 0 24px, transparent 24px 64px);
+  pointer-events: none; z-index: 0;
+}
+#app {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
+  height: 100dvh; padding: 14px 16px; gap: 12px;
+  max-width: 480px; margin: 0 auto;
+}
+header { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+.title {
+  font-family: "Mochiy Pop P One", sans-serif;
+  font-size: clamp(22px, 6vw, 30px);
+  color: #ffe066; -webkit-text-stroke: 3px #000; paint-order: stroke fill;
+  text-shadow: 4px 4px 0 #e8133a, 6px 6px 0 #000;
+  margin: 0; transform: rotate(-3deg);
+  letter-spacing: 0.02em;
+}
+.icon-btn {
+  background: rgba(255,255,255,0.95); border: 2.5px solid #000; color: #000;
+  padding: 5px 10px; border-radius: 999px; font-size: 13px; font-weight: 900; cursor: pointer;
+  box-shadow: 2px 2px 0 #000;
+}
+.icon-btn:active { transform: translate(2px, 2px); box-shadow: 0 0 0 #000; }
+
+.subline {
+  font-size: 12px; opacity: 0.85; text-align: center;
+  color: #ffe066; letter-spacing: 0.05em;
+}
+.subline .date {
+  font-family: "Mochiy Pop P One", sans-serif; color: #fff; font-size: 14px;
+}
+
+/* Main area */
+.main {
+  width: 100%; flex: 1 0 auto; display: flex;
+  align-items: center; justify-content: center;
+  position: relative;
+  min-height: 0;
+}
+
+/* Big draw button */
+.draw-btn {
+  background: linear-gradient(180deg, #ff5577 0%, #b8002a 100%);
+  border: 5px solid #000;
+  color: #fff;
+  font-family: "Mochiy Pop P One", sans-serif;
+  font-size: clamp(22px, 6vw, 30px);
+  padding: 22px 30px;
+  border-radius: 22px;
+  cursor: pointer;
+  box-shadow: 6px 6px 0 #000, 0 0 24px rgba(255,80,80,0.5);
+  text-shadow: 2px 2px 0 #000;
+  letter-spacing: 0.03em;
+  animation: drawPulse 1.4s ease-in-out infinite;
+  position: relative;
+}
+.draw-btn .sub { display: block; font-size: 12px; opacity: 0.9; margin-top: 4px; }
+.draw-btn:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 #000; }
+@keyframes drawPulse {
+  0%, 100% { transform: scale(1) rotate(-2deg); }
+  50%      { transform: scale(1.04) rotate(2deg); }
+}
+.draw-btn:disabled {
+  opacity: 0.5;
+  animation: none; cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+/* Result card */
+.result {
+  display: none;
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(180deg, #fff 0%, #fff8e0 100%);
+  border: 4px solid #000;
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 #000;
+  color: #1a0a0a;
+  padding: 16px 18px 18px;
+  position: relative;
+  transform: rotate(-1deg);
+}
+.result.show {
+  display: block;
+  animation: cardIn 0.6s cubic-bezier(.2,.9,.2,1);
+}
+@keyframes cardIn {
+  0%   { opacity: 0; transform: rotate(-15deg) scale(0.4); }
+  60%  { opacity: 1; transform: rotate(2deg) scale(1.05); }
+  100% { opacity: 1; transform: rotate(-1deg) scale(1); }
+}
+.result .rank-row {
+  text-align: center; padding: 6px 0 8px;
+  border-bottom: 3px dashed #c8a04a;
+}
+.result .rank-tag {
+  font-size: 11px; color: #6b3f1a; letter-spacing: 0.15em;
+  font-family: "Mochiy Pop P One", sans-serif;
+}
+.result .rank {
+  font-family: "Mochiy Pop P One", sans-serif;
+  font-size: clamp(28px, 8vw, 40px);
+  margin: 4px 0 0;
+  -webkit-text-stroke: 2.5px #000; paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--rank-color, #ff5577);
+  letter-spacing: 0.02em;
+  display: inline-block;
+  transform: rotate(-2deg);
+}
+.result .lucky-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 6px; margin: 10px 0;
+}
+.result .lucky-cell {
+  background: #fffbf0; border: 2px solid #6b3f1a; border-radius: 10px;
+  padding: 6px 8px; text-align: center;
+}
+.result .lucky-cell .l {
+  font-size: 9px; letter-spacing: 0.1em; color: #6b3f1a;
+}
+.result .lucky-cell .v {
+  font-family: "Mochiy Pop P One", sans-serif;
+  font-size: 14px; color: #1a0a0a; margin-top: 2px;
+}
+.result .quote {
+  background: #fff7d0; border: 2px solid #6b3f1a; border-radius: 10px;
+  padding: 8px 10px; margin: 8px 0;
+  font-family: "Mochiy Pop P One", sans-serif;
+  font-size: 14px; color: #6b3f1a; line-height: 1.5;
+  text-align: center;
+}
+.result .quote::before { content: "「"; }
+.result .quote::after  { content: "」"; }
+.result .actions {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-top: 8px;
+}
+.result .actions button {
+  border: 3px solid #000;
+  border-radius: 999px;
+  padding: 10px;
+  font-family: "Mochiy Pop P One", sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+}
+.result .actions button:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 #000; }
+.result .actions .share { background: #1da1f2; color: #fff; }
+.result .actions .reroll {
+  background: #fff; color: #1a0a0a; opacity: 0.5; cursor: not-allowed;
+}
+.result .actions .reroll.enabled { opacity: 1; cursor: pointer; }
+
+/* Cut-in animation */
+#cutin {
+  position: fixed; inset: 0;
+  pointer-events: none; overflow: hidden;
+  z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+}
+#cutin.show { opacity: 1; }
+#cutin .flash {
+  position: absolute; inset: -20%;
+  background: radial-gradient(circle at 50% 50%,
+    rgba(255,255,255,1) 0%,
+    rgba(255,225,0,0.85) 20%,
+    rgba(232,19,58,0.6) 40%, transparent 70%);
+  opacity: 0;
+}
+#cutin.show .flash { animation: flashBurst 0.45s ease-out; }
+@keyframes flashBurst {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+#cutin .stripes {
+  position: absolute; left: -120%; top: 0;
+  width: 240%; height: 100%;
+  background: repeating-linear-gradient(-15deg,
+    #e8133a 0 30px, #ffe066 30px 60px,
+    #e8133a 60px 90px, #000 90px 110px);
+  transform: skewX(-10deg);
+  opacity: 0;
+}
+#cutin.show .stripes { animation: stripesSweep 1.4s cubic-bezier(.2,.7,.2,1); }
+@keyframes stripesSweep {
+  0%   { opacity: 0; left: -120%; }
+  15%  { opacity: 0.85; }
+  100% { opacity: 0; left: 120%; }
+}
+#cutin .ueda-wrap {
+  position: absolute; inset: 0;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+#cutin .ueda {
+  height: 80%;
+  filter: drop-shadow(-6px 6px 0 #000) drop-shadow(8px 0 0 #e8133a);
+  transform: translateX(120%) rotate(10deg) scale(0.85);
+  opacity: 0;
+}
+#cutin.show .ueda { animation: uedaSlide 1.8s cubic-bezier(.15,.8,.2,1); }
+@keyframes uedaSlide {
+  0%   { opacity: 0; transform: translateX(120%) rotate(10deg) scale(0.85); }
+  20%  { opacity: 1; transform: translateX(-4%) rotate(-7deg) scale(1.1); }
+  35%  { transform: translateX(3%) rotate(3deg) scale(1); }
+  55%  { transform: translateX(0) rotate(-2deg) scale(1.03); }
+  85%  { opacity: 1; transform: translateX(0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translateX(0) rotate(0deg) scale(1.02); }
+}
+#cutin .label {
+  position: relative; z-index: 2;
+  font-family: "Mochiy Pop P One", sans-serif;
+  font-size: clamp(40px, 12vw, 70px);
+  color: #ffe066;
+  -webkit-text-stroke: 5px #000; paint-order: stroke fill;
+  text-shadow: 4px 4px 0 #e8133a, 8px 8px 0 #000;
+  text-align: center;
+  opacity: 0;
+}
+#cutin.show .label { animation: labelPunch 1.6s cubic-bezier(.15,.85,.25,1) 0.3s; }
+@keyframes labelPunch {
+  0%   { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+  10%  { transform: scale(1.35) rotate(6deg); opacity: 1; }
+  20%  { transform: scale(0.95) rotate(-4deg); }
+  35%  { transform: scale(1.08) rotate(2deg); }
+  50%  { transform: scale(1) rotate(-2deg); }
+  90%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.1) rotate(-2deg); }
+}
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translate(-50%, 30px);
+  background: #000; color: #ffe066;
+  border: 2px solid #ffe066;
+  padding: 8px 16px; border-radius: 999px;
+  font-size: 13px; opacity: 0; transition: 0.25s;
+  z-index: 200;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1 class="title">てんちょーおみくじ</h1>
+    <div style="display:flex;gap:5px;">
+      <button class="icon-btn" id="btn-mute">🔊</button>
+      <button class="icon-btn" id="btn-reset">↺</button>
+    </div>
+  </header>
+
+  <div class="subline">
+    <div>朝に開いて運試し！1日1回</div>
+    <div class="date" id="today-date"></div>
+  </div>
+
+  <div class="main">
+    <button class="draw-btn" id="btn-draw">
+      おみくじを引く
+      <span class="sub">（てんちょー召喚）</span>
+    </button>
+
+    <div class="result" id="result">
+      <div class="rank-row">
+        <div class="rank-tag">★ 今日の運勢 ★</div>
+        <div class="rank" id="rank-text">てんちょー</div>
+      </div>
+      <div class="lucky-grid">
+        <div class="lucky-cell">
+          <div class="l">ラッキー言葉</div>
+          <div class="v" id="lucky-word">—</div>
+        </div>
+        <div class="lucky-cell">
+          <div class="l">ラッキー時間</div>
+          <div class="v" id="lucky-time">—</div>
+        </div>
+        <div class="lucky-cell">
+          <div class="l">ラッキーカラー</div>
+          <div class="v" id="lucky-color">—</div>
+        </div>
+        <div class="lucky-cell">
+          <div class="l">ラッキー店内</div>
+          <div class="v" id="lucky-spot">—</div>
+        </div>
+      </div>
+      <div class="quote" id="quote">てんちょー語録</div>
+      <div class="actions">
+        <button class="share" id="btn-share">🔗 シェア</button>
+        <button class="reroll" id="btn-reroll" disabled>明日また引いてね</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="cutin">
+  <div class="flash"></div>
+  <div class="stripes"></div>
+  <div class="ueda-wrap"><img class="ueda" id="ueda-img" src="assets/ueda.png" alt="てんちょー" /></div>
+  <div class="label" id="cutin-label">てんちょーさん！</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+  const STORAGE_KEY = 'omikuji_state_v1';
+  const SHARE_URL = 'https://maxtakaharu34-cmd.github.io/omikuji-jp/';
+
+  // ---------- Fortune ranks (てんちょー風)
+  const RANKS = [
+    { id: 'kami',  label: '神てんちょー', color: '#ffe066', weight: 4, line: '今日のお前は宇宙一だ。レジ打ちで世界を救え。' },
+    { id: 'super', label: '超てんちょー', color: '#ff8e3a', weight: 10, line: '神オーラ全開。お客がもう一回来たくなる。' },
+    { id: 'tencho', label: 'てんちょー', color: '#ff5577', weight: 22, line: 'いつも通りの安定感。コンビニ業界の柱、それがお前。' },
+    { id: 'normal', label: 'ふつうてんちょー', color: '#5aa9ff', weight: 30, line: 'まあ、こういう日もある。発注ミスだけ気をつけろ。' },
+    { id: 'tame',  label: 'ちょいちょー', color: '#a874e0', weight: 18, line: '少し油断してる。今日は二度見でレジ確認。' },
+    { id: 'dame',  label: 'てんちょーじゃない…', color: '#666', weight: 12, line: 'バイト君に頼り切るな。覇気を取り戻せ。' },
+    { id: 'pinch', label: 'まさかの店長代理', color: '#1a0a0a', weight: 4, line: '今日は早めに帰っていい。家に帰ったら寝ろ。' }
+  ];
+
+  const LUCKY_WORDS = [
+    'いらっしゃいませ！', '袋ご利用ですか？', 'ありがとうございましたー！',
+    'てんちょー、頑張って！', '本日のオススメは…', 'お会計ジャストです！',
+    'またのお越しを', 'ポイントカードお持ちですか', 'ご一緒に唐揚げ棒どうですか',
+    'お弁当温めますか？', 'ファイトォー！'
+  ];
+  const LUCKY_TIMES = [
+    '朝7時の入荷後', 'ランチタイム', '14時のおやつ時間',
+    '夕方17時のラッシュ', '夜21時の品出し', '深夜の検品', '閉店30分前'
+  ];
+  const LUCKY_COLORS = [
+    '🔴 赤', '🟡 黄', '🟢 緑', '🔵 青',
+    '⚪ 白', '⚫ 黒', '🟣 紫', '🟠 橙', '🌈 虹'
+  ];
+  const LUCKY_SPOTS = [
+    'レジ前', 'おでん前', 'デザート売り場', '雑誌コーナー',
+    'カウンターコーヒーマシン', '冷蔵商品エリア', 'お菓子コーナー',
+    'お弁当棚', '入口の自動ドア', 'バックヤード', '駐車場の隅'
+  ];
+
+  // ---------- DOM ----------
+  const $ = (id) => document.getElementById(id);
+  const drawBtn = $('btn-draw');
+  const resultEl = $('result');
+  const rankTextEl = $('rank-text');
+  const luckyWordEl = $('lucky-word');
+  const luckyTimeEl = $('lucky-time');
+  const luckyColorEl = $('lucky-color');
+  const luckySpotEl = $('lucky-spot');
+  const quoteEl = $('quote');
+  const cutinEl = $('cutin');
+  const cutinLabel = $('cutin-label');
+  const todayDateEl = $('today-date');
+  const btnShare = $('btn-share');
+  const btnReroll = $('btn-reroll');
+  const btnReset = $('btn-reset');
+  const btnMute = $('btn-mute');
+  const toastEl = $('toast');
+
+  // ---------- Audio ----------
+  const Sound = (() => {
+    let ac = null, muted = localStorage.getItem('omikuji_muted') === '1';
+    const en = () => { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); return ac; };
+    const beep = (f, d, t = 'square', g = 0.13) => {
+      if (muted) return;
+      const a = en(); const o = a.createOscillator(); const gn = a.createGain();
+      o.type = t; o.frequency.value = f; gn.gain.value = g;
+      gn.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + d);
+      o.connect(gn).connect(a.destination); o.start(); o.stop(a.currentTime + d);
+    };
+    return {
+      prime: en,
+      cutin: () => {
+        [220, 330, 440, 660, 880].forEach((f, i) =>
+          setTimeout(() => beep(f, 0.1, 'square', 0.14), i * 60));
+      },
+      drum: () => beep(80, 0.18, 'sawtooth', 0.22),
+      good: () => [523, 659, 784, 1047, 1320].forEach((f, i) =>
+        setTimeout(() => beep(f, 0.13, 'triangle', 0.15), i * 70)),
+      bad: () => [330, 220, 165, 110].forEach((f, i) =>
+        setTimeout(() => beep(f, 0.2, 'sawtooth', 0.16), i * 110)),
+      neutral: () => [440, 660].forEach((f, i) =>
+        setTimeout(() => beep(f, 0.15, 'triangle', 0.14), i * 100)),
+      toggle: () => { muted = !muted; localStorage.setItem('omikuji_muted', muted ? '1' : '0'); return muted; },
+      isMuted: () => muted
+    };
+  })();
+  btnMute.textContent = Sound.isMuted() ? '🔇' : '🔊';
+
+  // ---------- Helpers ----------
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function formatToday() {
+    const d = new Date();
+    const days = ['日','月','火','水','木','金','土'];
+    return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日(${days[d.getDay()]})`;
+  }
+  // Deterministic per (date+seed): same day = same draw (no reroll cheating)
+  function hashString(s) {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+  function seededRng(seed) {
+    let s = seed >>> 0;
+    return () => {
+      // xorshift32
+      s ^= s << 13; s >>>= 0;
+      s ^= s >>> 17;
+      s ^= s << 5; s >>>= 0;
+      return (s & 0xffffffff) / 0xffffffff;
+    };
+  }
+  function pickWeighted(rng, items) {
+    const total = items.reduce((s, x) => s + x.weight, 0);
+    let r = rng() * total;
+    for (const it of items) { r -= it.weight; if (r < 0) return it; }
+    return items[items.length - 1];
+  }
+  function pickFrom(rng, arr) {
+    return arr[Math.floor(rng() * arr.length)];
+  }
+
+  function drawForToday(seed) {
+    // seed is per-day; client (browser) random seed varies daily but stable within the day
+    const rng = seededRng(hashString(seed));
+    const rank = pickWeighted(rng, RANKS);
+    return {
+      date: seed,
+      rankId: rank.id,
+      rank: rank.label,
+      rankColor: rank.color,
+      quote: rank.line,
+      luckyWord:  pickFrom(rng, LUCKY_WORDS),
+      luckyTime:  pickFrom(rng, LUCKY_TIMES),
+      luckyColor: pickFrom(rng, LUCKY_COLORS),
+      luckySpot:  pickFrom(rng, LUCKY_SPOTS)
+    };
+  }
+
+  function loadState() {
+    try {
+      const s = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (s && s.date) return s;
+    } catch {}
+    return null;
+  }
+  function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+
+  function showResult(s) {
+    rankTextEl.textContent = s.rank;
+    rankTextEl.style.setProperty('--rank-color', s.rankColor);
+    rankTextEl.style.color = s.rankColor;
+    luckyWordEl.textContent = s.luckyWord;
+    luckyTimeEl.textContent = s.luckyTime;
+    luckyColorEl.textContent = s.luckyColor;
+    luckySpotEl.textContent = s.luckySpot;
+    quoteEl.textContent = s.quote;
+    drawBtn.style.display = 'none';
+    resultEl.classList.add('show');
+  }
+
+  function playCutin(rank) {
+    Sound.prime();
+    cutinLabel.textContent = rank.label;
+    cutinLabel.style.color = rank.color;
+    cutinEl.classList.remove('show');
+    void cutinEl.offsetWidth;
+    cutinEl.classList.add('show');
+    Sound.drum();
+    setTimeout(() => Sound.cutin(), 200);
+    setTimeout(() => {
+      // play rank-appropriate stinger
+      if (['kami','super','tencho'].includes(rank.id)) Sound.good();
+      else if (['dame','pinch'].includes(rank.id)) Sound.bad();
+      else Sound.neutral();
+    }, 800);
+    setTimeout(() => cutinEl.classList.remove('show'), 2200);
+  }
+
+  function showToast(text) {
+    toastEl.textContent = text;
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toastEl.classList.remove('show'), 1500);
+  }
+
+  function tryDraw() {
+    Sound.prime();
+    const today = todayKey();
+    const saved = loadState();
+    if (saved && saved.date === today) {
+      // already drawn today
+      showResult(saved);
+      showToast('今日はもう引いたよ！');
+      return;
+    }
+    const s = drawForToday(today);
+    saveState(s);
+    const rank = RANKS.find((r) => r.id === s.rankId) || RANKS[2];
+    playCutin(rank);
+    setTimeout(() => showResult(s), 1900);
+  }
+
+  drawBtn.addEventListener('click', tryDraw);
+
+  btnShare.addEventListener('click', () => {
+    const s = loadState();
+    if (!s) return;
+    const txt = `今日の運勢：${s.rank}！ラッキー言葉「${s.luckyWord}」／ラッキー時間「${s.luckyTime}」／ラッキー店内「${s.luckySpot}」 #てんちょーおみくじ`;
+    const url = `https://x.com/intent/post?text=${encodeURIComponent(txt)}&url=${encodeURIComponent(SHARE_URL)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  });
+
+  btnReroll.addEventListener('click', () => {
+    showToast('明日まで待っててね！');
+  });
+
+  btnReset.addEventListener('click', () => {
+    if (!confirm('今日の結果をリセットして、もう一度引きますか？')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    resultEl.classList.remove('show');
+    drawBtn.style.display = '';
+    showToast('リセットしました');
+  });
+
+  btnMute.addEventListener('click', () => {
+    const m = Sound.toggle();
+    btnMute.textContent = m ? '🔇' : '🔊';
+  });
+
+  // ---------- Init ----------
+  todayDateEl.textContent = formatToday();
+  const saved = loadState();
+  if (saved && saved.date === todayKey()) {
+    showResult(saved);
+  }
+})();
+</script>
+</body>
+</html>
