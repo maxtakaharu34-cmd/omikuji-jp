@@ -280,7 +280,7 @@ header { width: 100%; display: flex; justify-content: space-between; align-items
   </header>
 
   <div class="subline">
-    <div>朝に開いて運試し！1日1回</div>
+    <div>朝に開いて運試し！（デモ：何回でも引けます）</div>
     <div class="date" id="today-date"></div>
   </div>
 
@@ -316,7 +316,7 @@ header { width: 100%; display: flex; justify-content: space-between; align-items
       <div class="quote" id="quote">てんちょー語録</div>
       <div class="actions">
         <button class="share" id="btn-share">🔗 シェア</button>
-        <button class="reroll" id="btn-reroll" disabled>明日また引いてね</button>
+        <button class="reroll enabled" id="btn-reroll">🎲 もう一回引く</button>
       </div>
     </div>
   </div>
@@ -457,8 +457,8 @@ header { width: 100%; display: flex; justify-content: space-between; align-items
   }
 
   function drawForToday(seed) {
-    // seed is per-day; client (browser) random seed varies daily but stable within the day
-    const rng = seededRng(hashString(seed));
+    // Demo mode: seed combines the date plus performance.now() so every draw differs.
+    const rng = seededRng(hashString(seed) ^ Math.floor(Math.random() * 0xffffffff));
     const rank = pickWeighted(rng, RANKS);
     return {
       date: seed,
@@ -522,17 +522,11 @@ header { width: 100%; display: flex; justify-content: space-between; align-items
 
   function tryDraw() {
     Sound.prime();
-    const today = todayKey();
-    const saved = loadState();
-    if (saved && saved.date === today) {
-      // already drawn today
-      showResult(saved);
-      showToast('今日はもう引いたよ！');
-      return;
-    }
-    const s = drawForToday(today);
+    const s = drawForToday(todayKey());
     saveState(s);
     const rank = RANKS.find((r) => r.id === s.rankId) || RANKS[2];
+    // Hide previous result while the cut-in plays
+    resultEl.classList.remove('show');
     playCutin(rank);
     setTimeout(() => showResult(s), 1900);
   }
@@ -548,7 +542,7 @@ header { width: 100%; display: flex; justify-content: space-between; align-items
   });
 
   btnReroll.addEventListener('click', () => {
-    showToast('明日まで待っててね！');
+    tryDraw();
   });
 
   btnReset.addEventListener('click', () => {
@@ -568,6 +562,7 @@ header { width: 100%; display: flex; justify-content: space-between; align-items
   todayDateEl.textContent = formatToday();
   const saved = loadState();
   if (saved && saved.date === todayKey()) {
+    // Show the most recent draw without forcing it (demo: user can re-roll)
     showResult(saved);
   }
 })();
